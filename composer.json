@@ -23,11 +23,10 @@
       "symfony/validator": "3.*"
   },
   "autoload": {
-      "psr-0": {
-          "MSDev\\DoctrineFileMakerDriver": ""
+      "psr-4": {
+          "MSDev\\DoctrineFileMakerDriver\\": ""
       }
   },
-  "target-dir": "DoctrineFileMakerDriver",
   "require": {
       "php": ">=7.0.0",
       "doctrine/dbal": "2.*",
