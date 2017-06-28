@@ -24,10 +24,10 @@
   },
   "autoload": {
       "psr-0": {
-          "MSDev\\DoctrineFileMakerDriver": ""
+          "DoctrineFileMakerDriver": ""
       }
   },
-  "target-dir": "MSDev/DoctrineFileMakerDriver",
+  "target-dir": "DoctrineFileMakerDriver",
   "require": {
       "php": ">=7.0.0",
       "doctrine/dbal": "2.*",
