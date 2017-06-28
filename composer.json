@@ -1,0 +1,39 @@
+{
+  "name": "matatirosoln/doctrine-filemaker-driver",
+  "description": "Use FileMaker through CWP as your backend database",
+  "type": "library",
+  "authors": [
+      {
+          "name": "Steve Winter",
+          "email": "steve@msdev.co.uk"
+      }
+  ],
+  "keywords": [
+      "FileMaker doctrine ORM DBAL driver"
+  ],
+  "license": [
+      "MIT"
+  ],
+  "require-dev": {
+      "phpunit/phpunit" : "@stable",
+      "symfony/yaml": "3.*",
+      "sensio/framework-extra-bundle": "3.*",
+      "symfony/framework-bundle": "3.*",
+      "doctrine/doctrine-bundle": "^1.6",
+      "symfony/validator": "3.*"
+  },
+  "autoload": {
+      "psr-0": {
+          "MSDev\\DoctrineFileMakerDriver": ""
+      }
+  },
+  "target-dir": "MSDev/DoctrineFileMakerDriver",
+  "require": {
+      "php": ">=7.0.0",
+      "doctrine/dbal": "2.*",
+      "greenlion/php-sql-parser": "^4.0",
+      "doctrine/orm": "2.*",
+      "matatirosoln/filemaker-api": "^14.0",
+      "guzzle/guzzlehttp" : "~3.8"
+  }
+}
