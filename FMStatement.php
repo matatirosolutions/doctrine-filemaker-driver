@@ -20,12 +20,12 @@
 namespace MSDev\DoctrineFileMakerDriver;
 
 use Doctrine\DBAL\Driver\Statement;
+use MSDev\DoctrineFileMakerDriver\Utility\MetaData;
 use PHPSQLParser\PHPSQLParser;
 use MSDev\DoctrineFileMakerDriver\Utility\QueryBuilder;
 use MSDev\DoctrineFileMakerDriver\Exceptions\FMException;
 use MSDev\DoctrineFileMakerDriver\Exceptions\MethodNotSupportedExcpetion;
 use \FileMaker_Error;
-use \FileMaker_Result;
 use \FileMaker_Record;
 
 class FMStatement implements \IteratorAggregate, Statement
@@ -98,8 +98,15 @@ class FMStatement implements \IteratorAggregate, Statement
      */
     private $qb;
 
+    /** @var FMConnection  */
+    private $conn;
+
+    /** @var array */
+    private $queryStack;
+
     /**
-     *
+     * @param string $stmt
+     * @param FMConnection $conn
      */
     public function __construct(string $stmt, FMConnection $conn)
     {
@@ -180,28 +187,38 @@ class FMStatement implements \IteratorAggregate, Statement
      */
     public function execute($params = null)
     {
-
         $query = $this->populateParams($this->_stmt, $this->_bindParam);
         $this->request = $this->sqlParser->parse($query);
 
-        $cmd = $this->qb->getQueryFromRequest($this->request, $this->_bindParam);
-dump($cmd);
-        $this->response = $cmd->execute();
+        $this->queryStack[] =
+            $this->qb->getQueryFromRequest($this->request, $this->_bindParam);
 
-        if($this->isError($this->response)) { dump($this->response, $this->response->getMessage()); //die();
-            if(401 == $this->response->code) {
-                dump('return null');
-                return null;
+        if(!$this->conn->isTransactionOpen() || 'insert' == $this->qb->getOperation()) {
+            $this->performQueries();
+        }
+    }
+
+    public function performQueries()
+    {
+        /** @var \FileMaker_Command $cmd */
+        foreach($this->queryStack as $cmd) {
+            $this->response = $cmd->execute();
+
+            if($this->isError($this->response)) {
+                if(401 == $this->response->code) {
+                    return null;
+                }
+                /** @var FileMaker_Error $res */
+                throw new FMException($this->response->getMessage(), $this->response->code);
             }
-            dump('throw exception'); die();
-            /** @var FileMaker_Error $res */
-            throw new FMException($this->response->getMessage(), $this->response->code);
+
+            $this->records = $this->response->getRecords();
+
+            $this->numRows = count($this->records);
+            $this->result = true;
         }
 
-        $this->records = $this->response->getRecords();
-
-        $this->numRows = count($this->records);
-        $this->result = true;
+        $this->queryStack = [];
     }
 
     private function isError($in) {
@@ -235,43 +252,38 @@ dump($cmd);
      */
     public function fetch($fetchMode = null)
     {
-        // do not try fetching from the statement if it's not expected to contain result
-        // in order to prevent exceptional situation
+        // do not try fetching from the statement if it's not expected to contain a result
         if (!$this->result) {
             return false;
         }
 
-        //*
         $fetchMode = $fetchMode ?: $this->_defaultFetchMode;
         switch ($fetchMode) {
-            case \PDO::FETCH_BOTH:
-                // TODO convert this to FM syntax
-                return db2_fetch_both($this->_stmt);
+//            case \PDO::FETCH_BOTH:
+//                return db2_fetch_both($this->_stmt);
             case \PDO::FETCH_ASSOC:
                 return count($this->records) === 0 ? false : $this->recordToArray(array_shift($this->records));
-            case \PDO::FETCH_CLASS:
-                $className = $this->defaultFetchClass;
-                $ctorArgs  = $this->defaultFetchClassCtorArgs;
-
-                if (func_num_args() >= 2) {
-                    $args      = func_get_args();
-                    $className = $args[1];
-                    $ctorArgs  = isset($args[2]) ? $args[2] : array();
-                }
-
-                $result = db2_fetch_object($this->_stmt);
-
-                if ($result instanceof \stdClass) {
-                    $result = $this->castObject($result, $className, $ctorArgs);
-                }
-
-                return $result;
-            case \PDO::FETCH_NUM:
-                // TODO convert this to FM syntax
-                return db2_fetch_array($this->_stmt);
-            case \PDO::FETCH_OBJ:
-                // TODO convert this to FM syntax
-                return db2_fetch_object($this->_stmt);
+//            case \PDO::FETCH_CLASS:
+//                $className = $this->defaultFetchClass;
+//                $ctorArgs  = $this->defaultFetchClassCtorArgs;
+//
+//                if (func_num_args() >= 2) {
+//                    $args      = func_get_args();
+//                    $className = $args[1];
+//                    $ctorArgs  = isset($args[2]) ? $args[2] : array();
+//                }
+//
+//                $result = db2_fetch_object($this->_stmt);
+//
+//                if ($result instanceof \stdClass) {
+//                    $result = $this->castObject($result, $className, $ctorArgs);
+//                }
+//
+//                return $result;
+//            case \PDO::FETCH_NUM:
+//                return db2_fetch_array($this->_stmt);
+//            case \PDO::FETCH_OBJ:
+//                return db2_fetch_object($this->_stmt);
             default:
                 throw new MethodNotSupportedExcpetion($fetchMode);
         }//*/
@@ -326,82 +338,15 @@ dump($cmd);
         return $this->numRows;
     }
 
-    /**
-     * Casts a stdClass object to the given class name mapping its' properties.
-     *
-     * @param \FileMaker_Result     $sourceObject     Object to cast from.
-     * @param string|object $destinationClass Name of the class or class instance to cast to.
-     * @param array         $ctorArgs         Arguments to use for constructing the destination class instance.
-     *
-     * @return object
-     *
-     * @throws DB2Exception
-     */
-    private function castObject(\FileMaker_Result $sourceObject, $destinationClass, array $ctorArgs = array())
-    {
-        dump($sourceObject); dump($destinationClass);
-die();
-        if ( ! is_string($destinationClass)) {
-            if ( ! is_object($destinationClass)) {
-                throw new DB2Exception(sprintf(
-                    'Destination class has to be of type string or object, %s given.', gettype($destinationClass)
-                ));
-            }
-        } else {
-            $destinationClass = new \ReflectionClass($destinationClass);
-            $destinationClass = $destinationClass->newInstanceArgs($ctorArgs);
-        }
-
-        $sourceReflection           = new \ReflectionObject($sourceObject);
-        $destinationClassReflection = new \ReflectionObject($destinationClass);
-        /** @var \ReflectionProperty[] $destinationProperties */
-        $destinationProperties      = array_change_key_case($destinationClassReflection->getProperties(), \CASE_LOWER);
-
-        foreach ($sourceReflection->getProperties() as $sourceProperty) {
-            $sourceProperty->setAccessible(true);
-
-            $name  = $sourceProperty->getName();
-            $value = $sourceProperty->getValue($sourceObject);
-
-            // Try to find a case-matching property.
-            if ($destinationClassReflection->hasProperty($name)) {
-                $destinationProperty = $destinationClassReflection->getProperty($name);
-
-                $destinationProperty->setAccessible(true);
-                $destinationProperty->setValue($destinationClass, $value);
-
-                continue;
-            }
-
-            $name = strtolower($name);
-
-            // Try to find a property without matching case.
-            // Fallback for the driver returning either all uppercase or all lowercase column names.
-            if (isset($destinationProperties[$name])) {
-                $destinationProperty = $destinationProperties[$name];
-
-                $destinationProperty->setAccessible(true);
-                $destinationProperty->setValue($destinationClass, $value);
-
-                continue;
-            }
-
-            $destinationClass->$name = $value;
-        }
-
-        return $destinationClass;
-    }
-
     private function populateParams($statement, $params)
     {
         return array_reduce($params, function($statement, $param) {
-            //$param = str_replace("-", "~", $param);
             return strpos($statement, '?') ? substr_replace($statement, $param, strpos($statement, '?'), strlen('?')) : $statement;
         }, $statement);
     }
 
     /**
-     * Parses a FileMaker record object into an array whose keys are the files from
+     * Parses a FileMaker record object into an array whose keys are the fields from
      * the requested query.
      *
      * @param FileMaker_Record $rec
@@ -426,5 +371,85 @@ die();
 
         return $resp;
     }
+
+    public function extractID()
+    {
+        $idColumn = $this->qb->getIdColumn($this->request, new MetaData());
+        return $this->records[0]->getField($idColumn);
+    }
+
+
+
+
+
+
+
+// Below is experimental (at best) or ported (read copied) from another driver
+//
+//    /**
+//     * Casts a stdClass object to the given class name mapping its' properties.
+//     *
+//     * @param \FileMaker_Result     $sourceObject     Object to cast from.
+//     * @param string|object $destinationClass Name of the class or class instance to cast to.
+//     * @param array         $ctorArgs         Arguments to use for constructing the destination class instance.
+//     *
+//     * @return object
+//     *
+//     * @throws DB2Exception
+//     */
+//    private function castObject(\FileMaker_Result $sourceObject, $destinationClass, array $ctorArgs = array())
+//    {
+//        dump($sourceObject); dump($destinationClass);
+//        die();
+//        if ( ! is_string($destinationClass)) {
+//            if ( ! is_object($destinationClass)) {
+//                throw new DB2Exception(sprintf(
+//                    'Destination class has to be of type string or object, %s given.', gettype($destinationClass)
+//                ));
+//            }
+//        } else {
+//            $destinationClass = new \ReflectionClass($destinationClass);
+//            $destinationClass = $destinationClass->newInstanceArgs($ctorArgs);
+//        }
+//
+//        $sourceReflection           = new \ReflectionObject($sourceObject);
+//        $destinationClassReflection = new \ReflectionObject($destinationClass);
+//        /** @var \ReflectionProperty[] $destinationProperties */
+//        $destinationProperties      = array_change_key_case($destinationClassReflection->getProperties(), \CASE_LOWER);
+//
+//        foreach ($sourceReflection->getProperties() as $sourceProperty) {
+//            $sourceProperty->setAccessible(true);
+//
+//            $name  = $sourceProperty->getName();
+//            $value = $sourceProperty->getValue($sourceObject);
+//
+//            // Try to find a case-matching property.
+//            if ($destinationClassReflection->hasProperty($name)) {
+//                $destinationProperty = $destinationClassReflection->getProperty($name);
+//
+//                $destinationProperty->setAccessible(true);
+//                $destinationProperty->setValue($destinationClass, $value);
+//
+//                continue;
+//            }
+//
+//            $name = strtolower($name);
+//
+//            // Try to find a property without matching case.
+//            // Fallback for the driver returning either all uppercase or all lowercase column names.
+//            if (isset($destinationProperties[$name])) {
+//                $destinationProperty = $destinationProperties[$name];
+//
+//                $destinationProperty->setAccessible(true);
+//                $destinationProperty->setValue($destinationClass, $value);
+//
+//                continue;
+//            }
+//
+//            $destinationClass->$name = $value;
+//        }
+//
+//        return $destinationClass;
+//    }
 
 }

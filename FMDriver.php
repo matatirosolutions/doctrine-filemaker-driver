@@ -19,11 +19,9 @@
 
 namespace MSDev\DoctrineFileMakerDriver;
 
-use FileMaker;
-use MSDev\DoctrineFileMakerDriver\FMPlatform;
-use MSDev\DoctrineFileMakerDriver\FMConnection;
-use MSDev\DoctrineFileMakerDriver\FMSchemaManager;
 use Doctrine\DBAL\Driver;
+use Doctrine\DBAL\Connection;
+use Symfony\Component\Intl\Exception\NotImplementedException;
 
 /**
  * FileMaker PHP API Driver.
@@ -51,7 +49,7 @@ class FMDriver implements Driver
     /**
      * {@inheritdoc}
      */
-    public function getDatabase(\Doctrine\DBAL\Connection $conn)
+    public function getDatabase(Connection $conn)
     {
         $params = $conn->getParams();
 
@@ -69,8 +67,8 @@ class FMDriver implements Driver
     /**
      * {@inheritdoc}
      */
-    public function getSchemaManager(\Doctrine\DBAL\Connection $conn)
+    public function getSchemaManager(Connection $conn)
     {
-        return new FMSchemaManager($conn);
+        throw new NotImplementedException('FileMaker does not support code-based schema changes');
     }
 }

@@ -10,9 +10,6 @@ namespace MSDev\DoctrineFileMakerDriver;
 
 use Doctrine\DBAL\Connection as AbstractConnection;
 use \FileMaker;
-use MSDev\DoctrineFileMakerDriver\FMDriver;
-use MSDev\DoctrineFileMakerDriver\FMStatement;
-use Symfony\Component\Intl\Exception\NotImplementedException;
 
 class FMConnection extends AbstractConnection
 {
@@ -22,8 +19,19 @@ class FMConnection extends AbstractConnection
      */
     private $connection = null;
 
+    /**
+     * @var FMStatement
+     */
     private $statement = null;
 
+    /**
+     * @var bool
+     */
+    private $transactionOpen = false;
+
+    /**
+     * @var array
+     */
     protected $params;
 
     public function __construct(array $params, FMDriver $driver)
@@ -36,25 +44,24 @@ class FMConnection extends AbstractConnection
         parent::__construct($params, $driver);
     }
 
-//    public function rollBack()
-//    {
-//        // this method must exist, but rollback isn't possible so nothing is implemented
-//    }
+    public function rollBack()
+    {
+        // this method must exist, but rollback isn't possible so nothing is implemented
+    }
 
     public function prepare($prepareString)
     {
-
         $this->statement = new FMStatement($prepareString, $this);
         $this->statement->setFetchMode($this->defaultFetchMode);
 
         return $this->statement;
     }
 
-//    public function beginTransaction()
-//    {
-//        // this method must exist, but transactions aren't possible so nothing is implemented
-//    }
-
+    public function beginTransaction()
+    {
+        $this->transactionOpen = true;
+        return true;
+    }
 
     /**
      * {@inheritdoc}
@@ -69,17 +76,51 @@ class FMConnection extends AbstractConnection
 
         return $stmt;
     }
-//
-//    public function commit()
-//    {
-//        // TODO: Implement commit() method.
-//    }
-//
-//    public function lastInsertId($name = null)
-//    {
-//        // TODO: Implement lastInsertId() method.
-//    }
-//
+
+    public function commit()
+    {
+        $this->statement->performQueries();
+        $this->transactionOpen = false;
+
+        return true;
+    }
+
+
+    public function isTransactionOpen()
+    {
+        return $this->transactionOpen;
+    }
+
+
+    public function lastInsertId($name = null)
+    {
+        return $this->statement->extractID();
+    }
+
+    public function getServerVersion()
+    {
+        return $this->connection->getAPIVersion();
+    }
+
+    /**
+     * @return FileMaker
+     */
+    public function getConnection()
+    {
+        return $this->connection;
+    }
+
+    public function isError($in) {
+        return is_a($in, 'FileMaker_Error');
+    }
+
+    public function getParameters()
+    {
+        return $this->params;
+    }
+
+
+    //
 //    public function quote($input, $type = \PDO::PARAM_STR)
 //    {
 //        // TODO: Implement quote() method.
@@ -100,31 +141,9 @@ class FMConnection extends AbstractConnection
 //        // TODO: Implement errorCode() method.
 //    }
 //
-    public function getServerVersion()
-    {
-        return $this->connection->getAPIVersion();
-    }
 //
 //    public function requiresQueryForServerVersion()
 //    {
 //        return true;
 //    }
-
-    /**
-     * @return FileMaker
-     */
-    public function getConnection()
-    {
-        return $this->connection;
-    }
-
-    public function isError($in) {
-        return is_a($in, 'FileMaker_Error');
-    }
-
-    public function getParameters()
-    {
-        return $this->params;
-    }
-
 }
