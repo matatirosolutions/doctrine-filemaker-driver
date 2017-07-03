@@ -44,7 +44,7 @@ class ScriptAccess
         dump($params);
         $cmd = $this->fm->newPerformScriptCommand($layout, $script, $params);
         $res = $cmd->execute();
-dump($res);
+
         if($this->con->isError($res)) {
             switch($res->code) {
                 default:
