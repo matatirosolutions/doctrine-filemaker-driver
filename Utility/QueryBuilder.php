@@ -170,22 +170,29 @@ class QueryBuilder
 
     private function generateWhere($params, $layout)
     {
+
         $cols = $this->selectColumns($this->query);
-        $cmd = $this->fmp->newCompoundFindCommand($layout);
+//        $cmd = $this->fmp->newCompoundFindCommand($layout);
+        $cmd = $this->fmp->newFindCommand($layout);
         $pc = 1;
 
         for($c = 0; $c<count($this->query['WHERE']); $c++) {
             $query = $this->query['WHERE'][$c];
 
             if(array_key_exists($query['base_expr'], $cols)) {
-                $field = $query['no_quotes']['parts'][1];
+                // if the comparison operator is '=' then double up to '=='
                 $comp = $this->query['WHERE'][$c+1]['base_expr'];
-                $value = $params[$pc];
+                $op = '=' == $comp ? '==' :  $comp;
 
-                $find = $this->fmp->newFindRequest($layout);
-                $find->addFindCriterion($field, $comp.$value);
-                /** @noinspection PhpParamsInspection */
-                $cmd->add($pc, $find);
+                $field = $query['no_quotes']['parts'][1];
+                $value = $op.$params[$pc];
+
+                $cmd->addFindCriterion($field, $value);
+
+//                $find = $this->fmp->newFindRequest($layout);
+//                $find->addFindCriterion($field, $comp.$value);
+//                /** @noinspection PhpParamsInspection */
+//                $cmd->add($pc, $find);
 
                 $pc++;
             }

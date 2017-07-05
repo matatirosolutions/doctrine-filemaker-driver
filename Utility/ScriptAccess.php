@@ -39,9 +39,6 @@ class ScriptAccess
 
     public function performScript($layout, $script, $params = null)
     {
-        dump($layout);
-        dump($script);
-        dump($params);
         $cmd = $this->fm->newPerformScriptCommand($layout, $script, $params);
         $res = $cmd->execute();
 
