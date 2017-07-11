@@ -48,5 +48,7 @@ class ScriptAccess
                     throw new FMException($res->message, $res->code);
             }
         }
+
+        return $res;
     }
 }

@@ -205,7 +205,19 @@ class QueryBuilder
     {
         $cols = [];
         foreach($tokens['SELECT'] as $column) {
-            $cols[$column['base_expr']] = $column['no_quotes']['parts'][1];
+            if(isset($column['no_quotes'])) {
+                $cols[$column['base_expr']] = $column['no_quotes']['parts'][1];
+                continue;
+            }
+
+            if(isset($column['sub_tree'])) {
+                $field = [];
+                foreach($column['sub_tree'] as $sub) {
+                    //$parts =
+                    $field[] = end($sub['no_quotes']['parts']);
+                }
+                $cols[$column['base_expr']] = implode(' ', $field);
+            }
         }
 
         return $cols;

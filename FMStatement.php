@@ -366,7 +366,8 @@ class FMStatement implements \IteratorAggregate, Statement
                 $resp[$field['alias']['no_quotes']['parts'][0]] = $rec->getRecordId();
                 continue;
             }
-            $resp[$field['alias']['no_quotes']['parts'][0]] = $rec->getField($field['no_quotes']['parts'][1]);
+            $data = $rec->getField($field['no_quotes']['parts'][1]);
+            $resp[$field['alias']['no_quotes']['parts'][0]] = $data == "" ? null : $data;
         }
 
         return $resp;
