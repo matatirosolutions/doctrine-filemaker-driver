@@ -59,7 +59,8 @@ class ContainerAccess
         $url = $this->generateURL($path);
 
         try {
-            return $client->get($url);
+            $response = $client->get($url);
+            return $response->getBody()->getContents();
         } catch (\Exception $e) {
             throw new FMException($e->getMessage(), $e->getCode());
         }
