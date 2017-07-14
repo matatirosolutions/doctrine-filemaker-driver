@@ -141,6 +141,6 @@ class ContainerAccess
             ? ''
             : ((empty($params['password']) ? $params['user'] : $params['user'].':'.$params['password']).'@');
 
-        return $proto.$cred.$host.$path;
+        return $proto.$cred.$host.htmlspecialchars_decode($path);
     }
 }
