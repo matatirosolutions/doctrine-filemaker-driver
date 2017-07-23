@@ -9,7 +9,7 @@
       }
   ],
   "keywords": [
-      "FileMaker doctrine ORM DBAL driver"
+      "doctrine", "dbal", "FileMaker"
   ],
   "license": [
       "MIT"
