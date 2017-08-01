@@ -102,6 +102,8 @@ class ContainerAccess
      * Calls a FileMaker script to insert content into a container
      *
      * @param string $layout        The FM layout which the field to insert into is on
+     * @param string $idField       The name of the field to locate the record using
+     * @param string $uuid          The uuid to locate the record by
      * @param string $field         The name of the field
      * @param string $assetPath     A URL which the asset can be retrieved from
      *                              This either needs to be publically accessible, or include
@@ -110,9 +112,11 @@ class ContainerAccess
      * @throws FMException
      *
      */
-    public function insertIntoContainer($layout, $field, $assetPath)
+    public function insertIntoContainer($layout, $idField, $uuid, $field, $assetPath)
     {
         $data = [
+            'idField' => $idField,
+            'uuid' => $uuid,
             'field' => $field,
             'asset' => $assetPath,
         ];

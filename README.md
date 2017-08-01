@@ -38,14 +38,15 @@ and replace it with
          */
         private $id;
      
-3. Create your 'actual' ID field, as used for relationships, as a separate property of your model. Set its GeneratedValue strategy to be `Identity` which will mean that Doctrie will wait for FM to assign that value - the assumption being that this is an auto-enter calc field (probaby Get(UUID)).  
+3. Create your 'actual' ID field, as used for relationships, as a separate property of your model. Set its GeneratedValue strategy to be `Custom` which will mean that Doctrie will wait for FM to assign that value - the assumption being that this is an auto-enter calc field (probaby Get(UUID)). You then need to specifiy the CustomIdGenerator and set this to `MSDev\DoctrineFileMakerDriver\FMIdentityGenerator` so that the value is returned as a string.  
    
        /**
         * @var string
         *
         * @Column(name="_id_Keyw", type="string" length=255)
         * @Id
-        * @GeneratedValue(strategy="IDENTITY")
+        * @GeneratedValue(strategy="CUSTOM")
+        * @CustomIdGenerator(class="MSDev\DoctrineFileMakerDriver\FMIdentityGenerator")
         */
        private $uuid;
        
