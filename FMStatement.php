@@ -191,7 +191,7 @@ class FMStatement implements \IteratorAggregate, Statement
         $this->request = $this->sqlParser->parse($query);
 
         $this->queryStack[] =
-            $this->qb->getQueryFromRequest($this->request, $this->_bindParam);
+            $this->qb->getQueryFromRequest($this->request, $this->_stmt, $this->_bindParam);
 
         if(!$this->conn->isTransactionOpen() || 'insert' == $this->qb->getOperation()) {
             $this->performQueries();
@@ -222,8 +222,8 @@ class FMStatement implements \IteratorAggregate, Statement
     }
 
     private function isError($in) {
-		return is_a($in, 'FileMaker_Error');
-	}
+        return is_a($in, 'FileMaker_Error');
+    }
 
     /**
      * {@inheritdoc}

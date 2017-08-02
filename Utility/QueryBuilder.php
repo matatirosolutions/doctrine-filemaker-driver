@@ -42,14 +42,14 @@ class QueryBuilder
     }
 
 
-    public function getQueryFromRequest(array $tokens, array $params) {
+    public function getQueryFromRequest(array $tokens, string $statement, array $params) {
         $this->operation = strtolower(array_keys($tokens)[0]);
 
         switch($this->operation) {
             case 'select':
                 return $this->generateFindCommand($tokens, $params);
             case 'update':
-                return $this->generateUpdateCommand($tokens);
+                return $this->generateUpdateCommand($tokens, $statement, $params);
             case 'insert':
                 return $this->generateInsertCommand($tokens, $params);
             case 'delete':
@@ -88,18 +88,26 @@ class QueryBuilder
     }
 
 
-    private function generateUpdateCommand($tokens) {
+    private function generateUpdateCommand($tokens, $statement, $params) {
         $layout = $this->getLayout($tokens);
         $recID = $this->getRecordID($tokens, $layout);
 
-        $data = [];
-        foreach($tokens['SET'] as $up) {
-            $details = explode('=', $up['base_expr']);
+        $data = $matches = [];
+        $count = 1;
+
+        preg_match('/ SET (.*) WHERE /', $statement, $matches);
+        $pairs = explode(',', $matches[1]);
+
+        foreach($pairs as $up) {
+            $details = explode('=', $up);
             $field = trim(array_shift($details));
-            $data[$field] = trim(implode('=', $details));
+            if($field) {
+                $data[$field] = $params[$count];
+                $count++;
+            }
         }
 
-        return $this->fmp->newEditCommand($layout, $recID, $data);
+        return $this->fmp->newEditCommand($layout, $recID, $data);;
     }
 
 
@@ -172,7 +180,6 @@ class QueryBuilder
     {
 
         $cols = $this->selectColumns($this->query);
-//        $cmd = $this->fmp->newCompoundFindCommand($layout);
         $cmd = $this->fmp->newFindCommand($layout);
         $pc = 1;
 
@@ -188,12 +195,6 @@ class QueryBuilder
                 $value = $op.$params[$pc];
 
                 $cmd->addFindCriterion($field, $value);
-
-//                $find = $this->fmp->newFindRequest($layout);
-//                $find->addFindCriterion($field, $comp.$value);
-//                /** @noinspection PhpParamsInspection */
-//                $cmd->add($pc, $find);
-
                 $pc++;
             }
         }
