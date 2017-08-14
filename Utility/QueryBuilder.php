@@ -146,7 +146,7 @@ class QueryBuilder
         $data = [];
         foreach($fields as $c => $f) {
             $field = trim($f);
-            if('rec_id' === $field || $idColumn == $field) {
+            if('rec_id' === $field || ($idColumn === $field && empty($params[$c+1]))) {
                 continue;
             }
             $data[$field] = $params[$c+1];
