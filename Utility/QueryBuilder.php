@@ -80,7 +80,7 @@ class QueryBuilder
         // Limit
         if('subquery' == $tokens['FROM'][0]['expr_type']) {
             $skip = (int)$tokens['WHERE'][2]['base_expr'] - 1;
-            $max = (int)$tokens['WHERE'][6]['base_expr'] - $skip;
+            $max = isset($tokens['WHERE'][6]) ? (int)$tokens['WHERE'][6]['base_expr'] - $skip : 1;
             $cmd->setRange($skip, $max);
         }
 
