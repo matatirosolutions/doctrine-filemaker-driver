@@ -10,6 +10,7 @@ namespace MSDev\DoctrineFileMakerDriver\Utility;
 
 use Doctrine\ORM\Mapping\ClassMetadata;
 use MSDev\DoctrineFileMakerDriver\FMConnection;
+use MSDev\DoctrineFileMakerDriver\Exceptions\FMException;
 use Symfony\Component\Intl\Exception\NotImplementedException;
 
 class QueryBuilder
@@ -80,7 +81,7 @@ class QueryBuilder
         // Limit
         if('subquery' == $tokens['FROM'][0]['expr_type']) {
             $skip = (int)$tokens['WHERE'][2]['base_expr'] - 1;
-            $max = isset($tokens['WHERE'][6]) ? (int)$tokens['WHERE'][6]['base_expr'] - $skip : 1;
+            $max = (int)$tokens['WHERE'][6]['base_expr'] - $skip;
             $cmd->setRange($skip, $max);
         }
 
@@ -130,6 +131,12 @@ class QueryBuilder
         $cmd->addFindCriterion($tokens['WHERE'][0]['base_expr'], $value);
 
         $res = $cmd->execute();
+
+        if(is_a($res, 'FileMaker_Error')) {
+            /** @var FileMaker_Error $res */
+            throw new FMException($res->getMessage(), $res->code);
+        }
+
         return $res->getFirstRecord()->getRecordId();
     }
 
