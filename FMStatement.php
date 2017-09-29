@@ -341,7 +341,7 @@ class FMStatement implements \IteratorAggregate, Statement
     private function populateParams($statement, $params)
     {
         return array_reduce($params, function($statement, $param) {
-            return strpos($statement, '?') ? substr_replace($statement, $param, strpos($statement, '?'), strlen('?')) : $statement;
+            return strpos($statement, '?') ? substr_replace($statement, addslashes($param), strpos($statement, '?'), strlen('?')) : $statement;
         }, $statement);
     }
 
