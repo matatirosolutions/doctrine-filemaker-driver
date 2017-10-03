@@ -30,6 +30,9 @@ use \FileMaker_Record;
 
 class FMStatement implements \IteratorAggregate, Statement
 {
+    /** @var int */
+    public $id;
+
     /**
      * @var resource
      */
@@ -110,6 +113,8 @@ class FMStatement implements \IteratorAggregate, Statement
      */
     public function __construct(string $stmt, FMConnection $conn)
     {
+        $this->id = time();
+
         $this->_stmt = $stmt;
         $this->conn = $conn;
 
@@ -191,7 +196,7 @@ class FMStatement implements \IteratorAggregate, Statement
         $this->request = $this->sqlParser->parse($query);
         $this->cmd = $this->qb->getQueryFromRequest($this->request, $this->_stmt, $this->_bindParam);
 
-        if(!$this->conn->isTransactionOpen() || 'insert' == $this->qb->getOperation()) {
+        if(!$this->conn->isTransactionOpen()) {
             $this->performCommand();
         }
     }
