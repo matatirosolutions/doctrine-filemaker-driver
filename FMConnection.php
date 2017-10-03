@@ -57,7 +57,7 @@ class FMConnection extends AbstractConnection
         $this->statement->setFetchMode($this->defaultFetchMode);
 
         if($this->transactionOpen) {
-            $this->queryStack[] = $this->statement;
+            $this->queryStack[$this->statement->id] = $this->statement;
         }
 
         return $this->statement;
@@ -105,6 +105,9 @@ class FMConnection extends AbstractConnection
 
     public function lastInsertId($name = null)
     {
+        $this->statement->performCommand();
+        unset($this->queryStack[$this->statement->id]);
+
         return $this->statement->extractID();
     }
 
