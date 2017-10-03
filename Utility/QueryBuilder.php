@@ -108,7 +108,7 @@ class QueryBuilder
             }
         }
 
-        return $this->fmp->newEditCommand($layout, $recID, $data);;
+        return $this->fmp->newEditCommand($layout, $recID, $data);
     }
 
 

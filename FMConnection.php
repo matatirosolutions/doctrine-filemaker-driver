@@ -34,6 +34,8 @@ class FMConnection extends AbstractConnection
      */
     protected $params;
 
+    public $queryStack = [];
+
     public function __construct(array $params, FMDriver $driver)
     {
         $this->params = $params;
@@ -53,6 +55,10 @@ class FMConnection extends AbstractConnection
     {
         $this->statement = new FMStatement($prepareString, $this);
         $this->statement->setFetchMode($this->defaultFetchMode);
+
+        if($this->transactionOpen) {
+            $this->queryStack[] = $this->statement;
+        }
 
         return $this->statement;
     }
@@ -79,7 +85,12 @@ class FMConnection extends AbstractConnection
 
     public function commit()
     {
-        $this->statement->performQueries();
+        /** @var FMStatement $stmt */
+        foreach($this->queryStack as $stmt) {
+            $stmt->performCommand();
+        }
+
+        $this->queryStack = [];
         $this->transactionOpen = false;
 
         return true;

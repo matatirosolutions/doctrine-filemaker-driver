@@ -101,8 +101,8 @@ class FMStatement implements \IteratorAggregate, Statement
     /** @var FMConnection  */
     private $conn;
 
-    /** @var array */
-    private $queryStack;
+    /** @var  \FileMaker_Command */
+    private $cmd;
 
     /**
      * @param string $stmt
@@ -189,36 +189,29 @@ class FMStatement implements \IteratorAggregate, Statement
     {
         $query = $this->populateParams($this->_stmt, $this->_bindParam);
         $this->request = $this->sqlParser->parse($query);
-
-        $this->queryStack[] =
-            $this->qb->getQueryFromRequest($this->request, $this->_stmt, $this->_bindParam);
+        $this->cmd = $this->qb->getQueryFromRequest($this->request, $this->_stmt, $this->_bindParam);
 
         if(!$this->conn->isTransactionOpen() || 'insert' == $this->qb->getOperation()) {
-            $this->performQueries();
+            $this->performCommand();
         }
     }
 
-    public function performQueries()
+    public function performCommand()
     {
-        /** @var \FileMaker_Command $cmd */
-        foreach($this->queryStack as $cmd) {
-            $this->response = $cmd->execute();
+        $this->response = $this->cmd->execute();
 
-            if($this->isError($this->response)) {
-                if(401 == $this->response->code) {
-                    return null;
-                }
-                /** @var FileMaker_Error $res */
-                throw new FMException($this->response->getMessage(), $this->response->code);
+        if ($this->isError($this->response)) {
+            if (401 == $this->response->code) {
+                return null;
             }
-
-            $this->records = $this->response->getRecords();
-
-            $this->numRows = count($this->records);
-            $this->result = true;
+            /** @var FileMaker_Error $res */
+            throw new FMException($this->response->getMessage(), $this->response->code);
         }
 
-        $this->queryStack = [];
+        $this->records = $this->response->getRecords();
+
+        $this->numRows = count($this->records);
+        $this->result = true;
     }
 
     private function isError($in) {
