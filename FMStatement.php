@@ -113,7 +113,7 @@ class FMStatement implements \IteratorAggregate, Statement
      */
     public function __construct(string $stmt, FMConnection $conn)
     {
-        $this->id = time();
+        $this->id = uniqid('', true);
 
         $this->_stmt = $stmt;
         $this->conn = $conn;
