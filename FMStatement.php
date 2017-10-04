@@ -365,7 +365,7 @@ class FMStatement implements \IteratorAggregate, Statement
                 $resp[$field['alias']['no_quotes']['parts'][0]] = $rec->getRecordId();
                 continue;
             }
-            $data = $rec->getFieldUnencoded($field['no_quotes']['parts'][1]);
+            $data = $rec->getField($field['no_quotes']['parts'][1]);
             $resp[$field['alias']['no_quotes']['parts'][0]] = $data == "" ? null : $data;
         }
 
@@ -375,7 +375,7 @@ class FMStatement implements \IteratorAggregate, Statement
     public function extractID()
     {
         $idColumn = $this->qb->getIdColumn($this->request, new MetaData());
-        return $this->records[0]->getFieldUnencoded($idColumn);
+        return $this->records[0]->getField($idColumn);
     }
 
 
