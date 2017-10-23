@@ -101,7 +101,7 @@ class QueryBuilder
 
         foreach($pairs as $up) {
             $details = explode('=', $up);
-            $field = trim(array_shift($details));
+            $field = trim(str_replace("'", '', array_shift($details)));
             if($field) {
                 $data[$field] = $params[$count];
                 $count++;
