@@ -257,34 +257,11 @@ class FMStatement implements \IteratorAggregate, Statement
 
         $fetchMode = $fetchMode ?: $this->_defaultFetchMode;
         switch ($fetchMode) {
-//            case \PDO::FETCH_BOTH:
-//                return db2_fetch_both($this->_stmt);
             case \PDO::FETCH_ASSOC:
                 return count($this->records) === 0 ? false : $this->recordToArray(array_shift($this->records));
-//            case \PDO::FETCH_CLASS:
-//                $className = $this->defaultFetchClass;
-//                $ctorArgs  = $this->defaultFetchClassCtorArgs;
-//
-//                if (func_num_args() >= 2) {
-//                    $args      = func_get_args();
-//                    $className = $args[1];
-//                    $ctorArgs  = isset($args[2]) ? $args[2] : array();
-//                }
-//
-//                $result = db2_fetch_object($this->_stmt);
-//
-//                if ($result instanceof \stdClass) {
-//                    $result = $this->castObject($result, $className, $ctorArgs);
-//                }
-//
-//                return $result;
-//            case \PDO::FETCH_NUM:
-//                return db2_fetch_array($this->_stmt);
-//            case \PDO::FETCH_OBJ:
-//                return db2_fetch_object($this->_stmt);
             default:
                 throw new MethodNotSupportedExcpetion($fetchMode);
-        }//*/
+        }
     }
 
     /**
@@ -336,11 +313,21 @@ class FMStatement implements \IteratorAggregate, Statement
         return $this->numRows;
     }
 
+    /**
+     * Populate parameters, removing characters which will cause issues with later
+     * query parsing
+     *
+     * @param $statement
+     * @param $params
+     * @return mixed
+     */
     private function populateParams($statement, $params)
     {
         return array_reduce($params, function($statement, $param) {
             $param = str_ireplace(['?', '(', ')', '@', 'union', 'where', 'rename'], '', $param);
-            return strpos($statement, '?') ? substr_replace($statement, addslashes($param), strpos($statement, '?'), strlen('?')) : $statement;
+            return strpos($statement, '?')
+                ? substr_replace($statement, addslashes($param), strpos($statement, '?'), strlen('?'))
+                : $statement;
         }, $statement);
     }
 
@@ -365,6 +352,11 @@ class FMStatement implements \IteratorAggregate, Statement
                 $resp[$field['alias']['no_quotes']['parts'][0]] = $rec->getRecordId();
                 continue;
             }
+            if('rec_meta' === $field['no_quotes']['parts'][1]) {
+                $resp[$field['alias']['no_quotes']['parts'][0]] = $this->getMetadataArray();
+                continue;
+            }
+
             $data = $rec->getField($field['no_quotes']['parts'][1]);
             $resp[$field['alias']['no_quotes']['parts'][0]] = $data == "" ? null : $data;
         }
@@ -372,84 +364,29 @@ class FMStatement implements \IteratorAggregate, Statement
         return $resp;
     }
 
+    /**
+     * Find the name of the ID column and return that value from the first record
+     *
+     * @return string
+     */
     public function extractID()
     {
         $idColumn = $this->qb->getIdColumn($this->request, new MetaData());
         return $this->records[0]->getField($idColumn);
     }
 
-
-
-
-
-
-
-// Below is experimental (at best) or ported (read copied) from another driver
-//
-//    /**
-//     * Casts a stdClass object to the given class name mapping its' properties.
-//     *
-//     * @param \FileMaker_Result     $sourceObject     Object to cast from.
-//     * @param string|object $destinationClass Name of the class or class instance to cast to.
-//     * @param array         $ctorArgs         Arguments to use for constructing the destination class instance.
-//     *
-//     * @return object
-//     *
-//     * @throws DB2Exception
-//     */
-//    private function castObject(\FileMaker_Result $sourceObject, $destinationClass, array $ctorArgs = array())
-//    {
-//        dump($sourceObject); dump($destinationClass);
-//        die();
-//        if ( ! is_string($destinationClass)) {
-//            if ( ! is_object($destinationClass)) {
-//                throw new DB2Exception(sprintf(
-//                    'Destination class has to be of type string or object, %s given.', gettype($destinationClass)
-//                ));
-//            }
-//        } else {
-//            $destinationClass = new \ReflectionClass($destinationClass);
-//            $destinationClass = $destinationClass->newInstanceArgs($ctorArgs);
-//        }
-//
-//        $sourceReflection           = new \ReflectionObject($sourceObject);
-//        $destinationClassReflection = new \ReflectionObject($destinationClass);
-//        /** @var \ReflectionProperty[] $destinationProperties */
-//        $destinationProperties      = array_change_key_case($destinationClassReflection->getProperties(), \CASE_LOWER);
-//
-//        foreach ($sourceReflection->getProperties() as $sourceProperty) {
-//            $sourceProperty->setAccessible(true);
-//
-//            $name  = $sourceProperty->getName();
-//            $value = $sourceProperty->getValue($sourceObject);
-//
-//            // Try to find a case-matching property.
-//            if ($destinationClassReflection->hasProperty($name)) {
-//                $destinationProperty = $destinationClassReflection->getProperty($name);
-//
-//                $destinationProperty->setAccessible(true);
-//                $destinationProperty->setValue($destinationClass, $value);
-//
-//                continue;
-//            }
-//
-//            $name = strtolower($name);
-//
-//            // Try to find a property without matching case.
-//            // Fallback for the driver returning either all uppercase or all lowercase column names.
-//            if (isset($destinationProperties[$name])) {
-//                $destinationProperty = $destinationProperties[$name];
-//
-//                $destinationProperty->setAccessible(true);
-//                $destinationProperty->setValue($destinationClass, $value);
-//
-//                continue;
-//            }
-//
-//            $destinationClass->$name = $value;
-//        }
-//
-//        return $destinationClass;
-//    }
+    /**
+     * Extract query metadata from the returned response
+     *
+     * @return array
+     */
+    private function getMetadataArray()
+    {
+        return json_encode([
+            'found' => (int)$this->response->getFoundSetCount(),
+            'fetch' => (int)$this->response->getFetchCount(),
+            'total' => (int)$this->response->getTableRecordCount(),
+        ]);
+    }
 
 }

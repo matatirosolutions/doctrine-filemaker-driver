@@ -80,8 +80,8 @@ class QueryBuilder
 
         // Limit
         if('subquery' == $tokens['FROM'][0]['expr_type']) {
-            $skip = (int)$tokens['WHERE'][2]['base_expr'] - 1;
-            $max = isset($tokens['WHERE'][6]['base_expr']) ? (int)$tokens['WHERE'][6]['base_expr'] - $skip : 1;
+            $skip = isset($tokens['WHERE'][6]['base_expr']) ? (int)$tokens['WHERE'][2]['base_expr'] - 1 : 0;
+            $max = isset($tokens['WHERE'][6]['base_expr']) ? (int)$tokens['WHERE'][6]['base_expr'] - $skip : 10;
             $cmd->setRange($skip, $max);
         }
 
@@ -153,7 +153,7 @@ class QueryBuilder
         $data = [];
         foreach($fields as $c => $f) {
             $field = trim($f);
-            if('rec_id' === $field || ($idColumn === $field && empty($params[$c+1]))) {
+            if('rec_id' === $field || 'rec_meta' === $field || ($idColumn === $field && empty($params[$c+1]))) {
                 continue;
             }
             $data[$field] = $params[$c+1];

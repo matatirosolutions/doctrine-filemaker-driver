@@ -133,31 +133,4 @@ class FMConnection extends AbstractConnection
         return $this->params;
     }
 
-
-    //
-//    public function quote($input, $type = \PDO::PARAM_STR)
-//    {
-//        // TODO: Implement quote() method.
-//    }
-//
-//    public function errorInfo()
-//    {
-//        // TODO: Implement errorInfo() method.
-//    }
-//
-//    public function exec($statement)
-//    {
-//        // TODO: Implement exec() method.
-//    }
-//
-//    public function errorCode()
-//    {
-//        // TODO: Implement errorCode() method.
-//    }
-//
-//
-//    public function requiresQueryForServerVersion()
-//    {
-//        return true;
-//    }
 }
