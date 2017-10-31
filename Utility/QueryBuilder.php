@@ -80,9 +80,12 @@ class QueryBuilder
 
         // Limit
         if('subquery' == $tokens['FROM'][0]['expr_type']) {
-            $skip = isset($tokens['WHERE'][6]['base_expr']) ? (int)$tokens['WHERE'][2]['base_expr'] - 1 : 0;
-            $max = isset($tokens['WHERE'][6]['base_expr']) ? (int)$tokens['WHERE'][6]['base_expr'] - $skip : 10;
-            $cmd->setRange($skip, $max);
+            if('subquery' == $tokens['FROM'][0]['expr_type']) {
+                $cmd->setRange(
+                    $this->getSkip($tokens),
+                    $this->getMax($tokens)
+                );
+            }
         }
 
         return $cmd;
@@ -252,4 +255,38 @@ class QueryBuilder
         return !empty($idColumns) ? end($idColumns) : 'id';
     }
 
+    /**
+     * Work out the skip value based on the query tokens
+     *
+     * @param array $tokens
+     * @return int
+     */
+    private function getSkip($tokens)
+    {
+        if(isset($tokens['WHERE'][1]['base_expr']) && '>=' == $tokens['WHERE'][1]['base_expr']) {
+            return (int)$tokens['WHERE'][2]['base_expr'] - 1;
+        }
+
+        return 0;
+    }
+
+    /**
+     * Work out the max records value based on the query tokens
+     *
+     * @param array $tokens
+     * @return int
+     */
+    private function getMax($tokens)
+    {
+        $skip = $this->getSkip($tokens);
+        if(isset($tokens['WHERE'][6]['base_expr'])) {
+            return (int)$tokens['WHERE'][6]['base_expr'] - $skip;
+        }
+
+        if(isset($tokens['WHERE'][1]['base_expr']) && '<=' == $tokens['WHERE'][1]['base_expr']) {
+            return (int)$tokens['WHERE'][2]['base_expr'] - 1;
+        }
+
+        return 10;
+    }
 }
