@@ -284,7 +284,7 @@ class QueryBuilder
         }
 
         if(isset($tokens['WHERE'][1]['base_expr']) && '<=' == $tokens['WHERE'][1]['base_expr']) {
-            return (int)$tokens['WHERE'][2]['base_expr'] - 1;
+            return (int)$tokens['WHERE'][2]['base_expr'];
         }
 
         return 10;
