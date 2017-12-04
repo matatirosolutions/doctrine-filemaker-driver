@@ -138,9 +138,19 @@ class ContainerAccess
     private function generateURL($path)
     {
         $params = $this->con->getParameters();
+        $url = parse_url($params['host']);
+        $host = array_key_exists('host', $url)
+            ? $url['host']
+            : $url['path'];
+        $proto = (array_key_exists('scheme', $url)
+                ? $url['scheme']
+                : 'https')
+            . '://';
 
-        $host = $params['host'];
-        $proto = (443 == $params['port'] ? 'https' : 'http').'://';
+        if(!empty($params['port'])) {
+            $host .= ':'.$params['port'];
+        }
+
         $cred = empty($params['user'])
             ? ''
             : ((empty($params['password']) ? $params['user'] : $params['user'].':'.$params['password']).'@');
