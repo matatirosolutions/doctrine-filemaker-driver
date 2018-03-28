@@ -56,10 +56,6 @@ class FMConnection extends AbstractConnection
         $this->statement = new FMStatement($prepareString, $this);
         $this->statement->setFetchMode($this->defaultFetchMode);
 
-        if($this->transactionOpen) {
-            $this->queryStack[$this->statement->id] = $this->statement;
-        }
-
         return $this->statement;
     }
 

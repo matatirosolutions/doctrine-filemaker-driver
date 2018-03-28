@@ -113,7 +113,7 @@ class FMStatement implements \IteratorAggregate, Statement
      */
     public function __construct(string $stmt, FMConnection $conn)
     {
-        $this->id = uniqid('', true).mt_rand(999, 999999);
+        $this->id = Uniqid('', true).mt_rand(999, 999999);
 
         $this->_stmt = $stmt;
         $this->conn = $conn;
@@ -194,9 +194,13 @@ class FMStatement implements \IteratorAggregate, Statement
     {
         $query = $this->populateParams($this->_stmt, $this->_bindParam);
         $this->request = $this->sqlParser->parse($query);
+
+        $this->id = Uniqid('', true).mt_rand(999, 999999);
         $this->cmd = $this->qb->getQueryFromRequest($this->request, $this->_stmt, $this->_bindParam);
 
-        if(!$this->conn->isTransactionOpen()) {
+        if($this->conn->isTransactionOpen()) {
+            $this->conn->queryStack[$this->id] = clone $this;
+        } else {
             $this->performCommand();
         }
     }
