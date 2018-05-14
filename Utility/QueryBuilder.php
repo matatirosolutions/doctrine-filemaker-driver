@@ -197,9 +197,9 @@ class QueryBuilder
             $query = $this->query['WHERE'][$c];
 
             if(array_key_exists($query['base_expr'], $cols)) {
-                // if the comparison operator is '=' then double up to '=='
+                // if the comparison operator is '=' then double up to '==' plus strip off 'LIKE'
                 $comp = $this->query['WHERE'][$c+1]['base_expr'];
-                $op = '=' == $comp ? '==' :  $comp;
+                $op = '=' == $comp ? '==' : ('LIKE' == $comp ? '' : $comp);
 
                 $field = $query['no_quotes']['parts'][1];
                 $value = $op.$params[$pc];
