@@ -5,9 +5,7 @@ A Doctrine driver to interact with FileMaker using the CWP API.
 ## Installation ##
 
     composer require matatirosoln/doctrine-filemaker-driver
-    
-For right now you'll need to add `dev-master` to that as there isn't a tagged version yet - expect the first tag in late August 2017 when the first implementation of this goes into a production environment.
-    
+        
 ## Configuration ##
     
 In your Doctrine configuration comment out 
@@ -25,7 +23,7 @@ and replace it with
          * Keyword
          *
          * @Table(name="Keyword")
-         * @Entity(repositoryClass="AppBundle\Repository\KeywordRepository")
+         * @Entity(repositoryClass="Repository\KeywordRepository")
          */
          class Keyword
             
@@ -43,12 +41,27 @@ and replace it with
        /**
         * @var string
         *
-        * @Column(name="_id_Keyw", type="string" length=255)
+        * @Column(name="_pk_ClientID", type="string" length=255)
         * @Id
         * @GeneratedValue(strategy="CUSTOM")
         * @CustomIdGenerator(class="MSDev\DoctrineFileMakerDriver\FMIdentityGenerator")
         */
        private $uuid;
+       
+   Alternatively you could generate the UUIDs in your model constructor (using for example [ramsey/uuid](https://github.com/ramsey/uuid)). In this case you'd end up with something like
+   
+        /**
+         * @var string
+         *
+         * @Column(name="__pk_CanvasID", type="string", length=255)
+         * @Id
+         */
+         private $uuid;
+         
+         public function __construct()
+         {
+             $this->uuid = Uuid::uuid4()->toString();
+         }
        
 4. Add other properties as required. To access related fields on your layout enclose the field name in single quotes in the column mapping.
      
@@ -59,10 +72,38 @@ and replace it with
           */
          private $contactEmail;
 
+5. If you need access to the record modification ID you can add the special mod_id pseudo property
+
+        /**
+         * @var int
+         *
+         * @Column(name="mod_id", type="integer")
+         */
+        private $modId;
+        
+6. To access query metadata add a rec_meta pseudo property of type json_array
+
+        /**
+        * @var array
+        *
+        * @Column(name="rec_meta", type="json_array")
+        */
+        private $meta;         
+        
+    This will be populated with an array containing
+
+        [
+             'found' => (int)$this->response->getFoundSetCount(),
+             'fetch' => (int)$this->response->getFetchCount(),
+             'total' => (int)$this->response->getTableRecordCount(),
+        ]    
+        
+    Which you can then access from any record in your returned set.
+
 ## Considerations ##
 
 1. Because of the way in which more 'conventional' databases handle relationships, there is no concept of a portal. To access related data create a corresponding model for that table (layout) and create standard Doctrine relationships (OneToOne, OneToMany, ManyToOne etc).
-2. If your model contains caclulation fields you will run into issues when trying to create a new record, since Doctrine will try and set those fields to null. One 'solution' to this is to create a 'stub' of your model which contains only the fields which are necesary to create a new record and to instantiate that for record creation.
+2. If your model contains caclulation fields you will run into issues when trying to create a new record, since Doctrine will try and set those fields to null. One 'solution' to this is to create a 'stub' of your model which contains only the fields which are necesary to create a new record and to instantiate that for record creation. If you head down this route you'll likely want to create an interface which both your stub and your real entity implement so that you can typehint appropriately.
  
 ## See also ##
  

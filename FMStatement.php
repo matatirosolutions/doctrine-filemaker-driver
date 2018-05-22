@@ -356,6 +356,10 @@ class FMStatement implements \IteratorAggregate, Statement
                 $resp[$field['alias']['no_quotes']['parts'][0]] = $rec->getRecordId();
                 continue;
             }
+            if('mod_id' === $field['no_quotes']['parts'][1]) {
+                $resp[$field['alias']['no_quotes']['parts'][0]] = $rec->getModificationId();
+                continue;
+            }
             if('rec_meta' === $field['no_quotes']['parts'][1]) {
                 $resp[$field['alias']['no_quotes']['parts'][0]] = $this->getMetadataArray();
                 continue;
