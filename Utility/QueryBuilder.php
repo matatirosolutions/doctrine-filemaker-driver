@@ -188,7 +188,6 @@ class QueryBuilder
 
     private function generateWhere($params, $layout)
     {
-
         $cols = $this->selectColumns($this->query);
         $cmd = $this->fmp->newFindCommand($layout);
         $pc = 1;

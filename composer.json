@@ -33,6 +33,6 @@
       "greenlion/php-sql-parser": "^4.0",
       "doctrine/orm": "2.*",
       "matatirosoln/filemaker-api": "^15.0",
-      "guzzlehttp/guzzle" : "6.2.*"
+      "guzzlehttp/guzzle" : "^6.2"
   }
 }
